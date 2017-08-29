@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+<body>
+  <div class="container-fluid main">
+    <h1>United States</h1>
+    <h3>Quarterly Gross Domestic Product</h3>
+    <div class="chart"></div>
+    <p id="description"></p>
+  </div>
+ <footer>
+   <script>
+   "use strict";
+
+   var url = "https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/GDP-data.json";
+   var jArray = [];
+   var yData = [];
+   $(function () {
+     $.getJSON(url, function (json) {
+       jArray = json;
+       document.getElementById("description").innerHTML = jArray.description;
+       chart();
+     });
+   });
+
+   function chart() {
+     var chartMargin = { top: 30, right: 40, bottom: 30, left: 60 },
+         width = 900 - chartMargin.left - chartMargin.right,
+         height = 500 - chartMargin.top - chartMargin.bottom;
+     var x = d3.time.scale().range([0, width]);
+     var y = d3.scale.linear().range([height, 0]);
+     x.domain([new Date(jArray.from_date), new Date(jArray.to_date)]);
+     y.domain([0, d3.max(jArray.data, function (d) {
+       return d[1];
+     })]);
+
+     var canvas = d3.select(".chart").append("svg").attr("width", width + chartMargin.left + chartMargin.right).attr("height", height + chartMargin.top + chartMargin.bottom).append("g").attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")");
+     var barSize = width / jArray.data.length;
+     var formatTime = d3.time.format("%Y - %B");
+     var barFill = canvas.selectAll("rect").data(jArray.data).enter().append("rect").attr("x", function (d, i) {
+       return x(new Date(d[0]));
+     }).attr("y", function (d) {
+       return y(d[1]);
+     }).attr("height", function (d) {
+       return height - y(d[1]);
+     }).attr("width", barSize).on("mouseover", function (d) {
+       div.transition().duration(200).style("opacity", .9);
+       div.html("<h5>$" + d[1] + " Billion</h5>" + "<h6>" + formatTime(new Date(d[0])) + "</h6>").style("left", d3.event.pageX + 8 + "px").style("top", d3.event.pageY - 50 + "px");
+     }).on("mouseout", function (d) {
+       div.transition().duration(500).style("opacity", 0);
+     });
+
+     var xAxis = d3.svg.axis().scale(x).orient("bottom").tickFormat(d3.time.format('%Y'));
+     var yAxis = d3.svg.axis().scale(y).orient("left");
+     canvas.append("g").attr("class", "x axis").attr("transform", "translate(0," + height + ")").call(xAxis);
+
+     canvas.append("g").attr("class", "y axis").call(yAxis).append("text").text("Billions").attr("transform", "rotate(-90)").attr("y", 10).attr("dy", ".90em").style("text-anchor", "end");
+
+     //Add tooltip for each year
+     var div = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 1);
+   }
+   </script>
+ </footer>
+</html>
+</body>
